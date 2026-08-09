@@ -637,17 +637,6 @@ Return ONLY valid JSON with this exact schema (no markdown, no code fences):
       // Normalize and enforce clean MNC structure
       const normalizedData = normalizeResumeResult(parsedData, parsedFacts, candidateNameOverride);
 
-      // ===== TEMPORARY DEBUG LOG — remove after confirming extraction is correct =====
-      console.log("===== DEBUG: normalizedData.education =====");
-      console.log(JSON.stringify(normalizedData.education, null, 2));
-      console.log("===== DEBUG: normalizedData.projects =====");
-      console.log(JSON.stringify(normalizedData.projects, null, 2));
-      console.log("===== DEBUG: parsedFacts.educationList (raw before normalization) =====");
-      console.log(JSON.stringify(parsedFacts.educationList, null, 2));
-      console.log("===== DEBUG: parsedFacts.projectsList (raw before normalization) =====");
-      console.log(JSON.stringify(parsedFacts.projectsList, null, 2));
-      // ===== END TEMPORARY DEBUG LOG =====
-
       return res.json({
         success: true,
         data: normalizedData

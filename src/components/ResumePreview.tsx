@@ -199,11 +199,6 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({ profile, result, m
       }}
     >
 
-      {/* ══════════ TEMPORARY DEBUG BLOCK — remove after diagnosis ══════════ */}
-      <pre style={{ background: '#fee', padding: '10px', fontSize: '10px', whiteSpace: 'pre-wrap', marginBottom: '16px', border: '2px solid red', borderRadius: '4px', overflowX: 'auto' }}>
-        {`DEBUG masterResume.education:\n${JSON.stringify(masterResume?.education, null, 2)}\n\nDEBUG masterResume.projects:\n${JSON.stringify(masterResume?.projects, null, 2)}\n\nDEBUG result.education:\n${JSON.stringify(result?.education, null, 2)}\n\nDEBUG result.projects:\n${JSON.stringify(result?.projects, null, 2)}`}
-      </pre>
-      {/* ══════════ END TEMPORARY DEBUG BLOCK ══════════ */}
 
       {/* ──────────────── 1. HEADER ──────────────── */}
       <div style={{ textAlign: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #d1d5db' }}>
