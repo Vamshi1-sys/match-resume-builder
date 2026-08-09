@@ -130,7 +130,7 @@ export default function App() {
               onClearError={() => setErrorMessage(null)}
             />
             <div className="mt-8">
-              <ATSResumeBuilder profile={profile} />
+              <ATSResumeBuilder profile={profile} tailoredResult={tailoredResult} />
             </div>
           </>
         )}

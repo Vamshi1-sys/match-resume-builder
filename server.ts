@@ -153,17 +153,62 @@ function parseOldResumeText(rawText: string, candidateNameOverride?: string) {
     skills = Array.from(new Set(skills));
   }
 
-  // Extract Education
+  // Extract Education — group multi-line entries and parse degree / institution / year
   let educationList: any[] = [];
   if (sections["EDUCATION"] && sections["EDUCATION"].length > 0) {
+    let currentEdu: any = null;
+
     for (const line of sections["EDUCATION"]) {
-      if (line.length > 3) {
-        educationList.push({
-          degree: line,
-          institution: "",
-          year: "",
-          cgpa: ""
-        });
+      if (line.length <= 3) continue;
+
+      // Detect year patterns like "2020", "May 2023", "Dec 25", "2019 – 2023"
+      const hasYear = /(?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})/i.test(line);
+      // Detect degree keywords
+      const isDegree = /\b(?:B\.?Tech|B\.?E|B\.?Sc|B\.?Com|M\.?Tech|M\.?Sc|M\.?E|MBA|MCA|BCA|B\.?A|M\.?A|PhD|Ph\.?D|Bachelor|Master|Diploma|Associate|Doctor|Graduate|Post.?Graduate|Engineering|Science|Computer|Arts|Commerce|M\.S\.|B\.S\.)\b/i.test(line);
+      // Detect institution keywords
+      const isInstitution = /\b(?:University|Institute|College|School|Academy|Polytechnic|Institution|Technology|IIT|NIT|VIT|SRM|Anna\s+University)\b/i.test(line);
+
+      if (isDegree && !isInstitution) {
+        // This line is a degree line — start a new entry or set degree on current
+        if (!currentEdu || currentEdu.degree) {
+          currentEdu = { degree: "", institution: "", year: "", cgpa: "" };
+          educationList.push(currentEdu);
+        }
+        // Extract year from degree line if present
+        const yearMatch = line.match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})))?)/i);
+        if (yearMatch) currentEdu.year = yearMatch[0].trim();
+        currentEdu.degree = line.replace(/[|,].*$/, "").replace(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})/ig, "").replace(/(?:19|20)\d{2}.*/, "").replace(/[-–]+$/, "").trim();
+      } else if (isInstitution || (hasYear && line.includes("|")) ) {
+        // This line is an institution line (may also contain year via pipe)
+        if (!currentEdu) {
+          currentEdu = { degree: "", institution: "", year: "", cgpa: "" };
+          educationList.push(currentEdu);
+        }
+        // Split on pipe: "South East Missouri State University | Master of Science – Dec 25"
+        const parts = line.split(/\s*[|]\s*/);
+        currentEdu.institution = parts[0].trim();
+        if (parts[1]) {
+          // Second part may contain degree + year
+          const yearMatch2 = parts[1].match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present|\w+\s*'?\d{2}))?)/);
+          if (yearMatch2 && !currentEdu.year) currentEdu.year = yearMatch2[0].trim();
+          if (!currentEdu.degree) {
+            currentEdu.degree = parts[1].replace(/[-–].*$/, "").trim();
+          }
+        }
+        // Extract year from institution line if not already found
+        if (!currentEdu.year) {
+          const yr = line.match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present|\w+\s*'?\d{2}))?)/i);
+          if (yr) currentEdu.year = yr[0].trim();
+        }
+      } else if (hasYear && currentEdu) {
+        // Standalone year line — attach to current entry
+        if (!currentEdu.year) {
+          const yr = line.match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present))?)/);
+          if (yr) currentEdu.year = yr[0].trim();
+        }
+      } else if (currentEdu && !currentEdu.institution && !isDegree) {
+        // Additional detail line — use as institution if not yet set
+        currentEdu.institution = line.trim();
       }
     }
   }
