@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+/* ── Root / Global ──────────────────────────────────────────────────────── */
+:root {
+  --google-blue: #1a73e8;
+  --google-blue-dark: #1557b0;
+  --surface: #f8f9fa;
+  --border: #dadce0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', 'Arial', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Custom animations (Tailwind arbitrary-class helpers) ────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s ease both;
+}
+
+/* ── Resume container — on-screen polish ────────────────────────────────── */
+#resume-export-container {
+  transition: box-shadow 0.2s ease;
+}
+#resume-export-container:hover {
+  box-shadow: 0 4px 16px rgba(60, 64, 67, 0.18), 0 8px 24px rgba(60, 64, 67, 0.12) !important;
+}
+
+/* ── Print / PDF styles ─────────────────────────────────────────────────── */
+@media print {
+  /* Hide all UI chrome, show only the resume */
+  header, footer, nav, .print\:hidden { display: none !important; }
+
+  #resume-export-container {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px 28px !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Prevent bullets from splitting across pages */
+  li, p { page-break-inside: avoid; }
+  h2    { page-break-after: avoid; }
+
+  /* Force colour even in printer-friendly mode */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
+/* ── Scrollbar polish (webkit) ──────────────────────────────────────────── */
+::-webkit-scrollbar         { width: 6px; height: 6px; }
+::-webkit-scrollbar-track   { background: #f1f3f4; border-radius: 3px; }
+::-webkit-scrollbar-thumb   { background: #dadce0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #bdc1c6; }
+
+/* ── Utility: smooth scale on button hover ──────────────────────────────── */
+button { transition: transform 0.15s ease, box-shadow 0.15s ease; }
