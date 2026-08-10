@@ -430,9 +430,8 @@ function normalizeResumeResult(data: any, parsedFacts: any, candidateNameOverrid
   };
 }
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+const PORT = 3000;
 
   app.use(express.json({ limit: "10mb" }));
 
@@ -700,25 +699,30 @@ Return ONLY valid JSON with this exact schema (no markdown, no code fences):
     }
   });
 
-  // Vite middleware for development vs static serve for production
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+  // Vite middleware for development vs static serve for production (only when not on Vercel)
+  async function startServer() {
+    if (process.env.NODE_ENV !== "production") {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } else {
+      const distPath = path.join(process.cwd(), "dist");
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        res.sendFile(path.join(distPath, "index.html"));
+      });
+    }
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`ResuMatch AI server running on http://0.0.0.0:${PORT}`);
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`ResuMatch AI server running on http://0.0.0.0:${PORT}`);
-  });
-}
+  if (process.env.VERCEL !== "1") {
+    startServer();
+  }
 
-startServer();
+export default app;
 
