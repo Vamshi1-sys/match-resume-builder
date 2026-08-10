@@ -148,42 +148,50 @@ function parseOldResumeText(rawText: string, candidateNameOverride?: string) {
       if (line.length <= 3) continue;
 
       const hasYear = /(?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})/i.test(line);
-      const isDegree = /\b(?:B\.?Tech|B\.?E|B\.?Sc|B\.?Com|M\.?Tech|M\.?Sc|M\.?E|MBA|MCA|BCA|B\.?A|M\.?A|PhD|Ph\.?D|Bachelor|Master|Diploma|Associate|Doctor|Graduate|Post.?Graduate|Engineering|Science|Computer|Arts|Commerce|M\.S\.|B\.S\.)\b/i.test(line);
       const isInstitution = /\b(?:University|Institute|College|School|Academy|Polytechnic|Institution|Technology|IIT|NIT|VIT|SRM|Anna\s+University)\b/i.test(line);
 
-      if (isDegree && !isInstitution) {
-        if (!currentEdu || currentEdu.degree) {
-          currentEdu = { degree: "", institution: "", year: "", cgpa: "" };
-          educationList.push(currentEdu);
-        }
-        const yearMatch = line.match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})))?)/i);
-        if (yearMatch) currentEdu.year = yearMatch[0].trim();
-        currentEdu.degree = line.replace(/[|,].*$/, "").replace(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})/ig, "").replace(/(?:19|20)\d{2}.*/, "").replace(/[-–]+$/, "").trim();
-      } else if (isInstitution || (hasYear && line.includes("|")) ) {
-        if (!currentEdu) {
-          currentEdu = { degree: "", institution: "", year: "", cgpa: "" };
-          educationList.push(currentEdu);
-        }
+      if (isInstitution || (hasYear && line.includes("|") && !currentEdu)) {
+        currentEdu = { degree: "", institution: "", year: "", cgpa: "" };
+        educationList.push(currentEdu);
+
         const parts = line.split(/\s*[|]\s*/);
         currentEdu.institution = parts[0].trim();
         if (parts[1]) {
-          const yearMatch2 = parts[1].match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present|\w+\s*'?\d{2}))?)/);
-          if (yearMatch2 && !currentEdu.year) currentEdu.year = yearMatch2[0].trim();
-          if (!currentEdu.degree) {
-            currentEdu.degree = parts[1].replace(/[-–].*$/, "").trim();
-          }
+          const yearMatch = parts[1].match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present|\w+\s*'?\d{2}))?)/);
+          if (yearMatch) currentEdu.year = yearMatch[0].trim();
+          currentEdu.degree = parts[1].replace(/[-–].*$/, "").trim();
         }
         if (!currentEdu.year) {
           const yr = line.match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present|\w+\s*'?\d{2}))?)/i);
           if (yr) currentEdu.year = yr[0].trim();
         }
-      } else if (hasYear && currentEdu) {
-        if (!currentEdu.year) {
-          const yr = line.match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present))?)/);
-          if (yr) currentEdu.year = yr[0].trim();
+      } else if (currentEdu) {
+        const yearMatch = line.match(/(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})|(?:19|20)\d{2}(?:\s*[-–]\s*(?:(?:19|20)\d{2}|Present))?)/i);
+        if (yearMatch && !currentEdu.year) {
+          currentEdu.year = yearMatch[0].trim();
         }
-      } else if (currentEdu && !currentEdu.institution && !isDegree) {
-        currentEdu.institution = line.trim();
+
+        const cleanLine = line
+          .replace(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(?:'?\d{2}|\d{4})/ig, "")
+          .replace(/(?:19|20)\d{2}.*/, "")
+          .replace(/[-–]+$/, "")
+          .replace(/^(Bachelor’s Degree|Master’s Degree|Degree|Major|Specialization):\s*/i, "")
+          .trim();
+
+        if (cleanLine.length > 2) {
+          if (!currentEdu.degree) {
+            currentEdu.degree = cleanLine;
+          } else if (cleanLine.toLowerCase().includes("computer") || cleanLine.toLowerCase().includes("science") || cleanLine.toLowerCase().includes("engineering") || !currentEdu.degree.toLowerCase().includes("science")) {
+            if (currentEdu.degree.length < cleanLine.length) {
+              currentEdu.degree = cleanLine;
+            } else if (!currentEdu.degree.toLowerCase().includes(cleanLine.toLowerCase())) {
+              currentEdu.degree += ` - ${cleanLine}`;
+            }
+          }
+        }
+      } else {
+        currentEdu = { degree: line.trim(), institution: "", year: "", cgpa: "" };
+        educationList.push(currentEdu);
       }
     }
   }
