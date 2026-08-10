@@ -408,6 +408,14 @@ const getGenAI = () => {
   });
 };
 
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    hasApiKey: !!process.env.GEMINI_API_KEY,
+    nodeVersion: process.version
+  });
+});
+
 app.post("/api/tailor-resume", async (req, res) => {
   try {
     const { oldResumeText, jobDescription, targetJobTitle, targetCompany, candidateNameOverride } = req.body;
