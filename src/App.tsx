@@ -89,7 +89,22 @@ export default function App() {
         }),
       });
 
-      const json = await response.json();
+      // Safe JSON parse — guard against HTML error pages from the server
+      const rawText = await response.text();
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json') && !rawText.trim().startsWith('{')) {
+        throw new Error(
+          `Server returned an unexpected response (HTTP ${response.status}). ` +
+          'Please make sure the server is running and try again.'
+        );
+      }
+
+      let json: any;
+      try {
+        json = JSON.parse(rawText);
+      } catch {
+        throw new Error('Server response could not be parsed. Please try again.');
+      }
 
       if (!response.ok || !json.success) {
         throw new Error(json.error || json.message || 'Failed to generate tailored resume. Please try again.');
