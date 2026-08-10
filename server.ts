@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
 const SAMPLE_NAMES = new Set(["alex rivera", "alex.rivera@example.com", "alexrivera-dev"]);
@@ -702,6 +701,7 @@ Return ONLY valid JSON with this exact schema (no markdown, no code fences):
   // Vite middleware for development vs static serve for production (only when not on Vercel)
   async function startServer() {
     if (process.env.NODE_ENV !== "production") {
+      const { createServer: createViteServer } = await import("vite");
       const vite = await createViteServer({
         server: { middlewareMode: true },
         appType: "spa",
